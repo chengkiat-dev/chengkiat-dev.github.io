@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scheduling System</title>
+  
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+    
+    .form-container {
+      flex: 1;
+      min-width: 300px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .calendar-container {
+      flex: 2;
+      min-width: 600px;
+    }
+    
+    #calendar {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    button {
+      background: #4285F4;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      background: #3367D6;
+    }
+    
+    /* Calendar styling for booked dates */
+    .fc-day-disabled {
+      background-color: #ffebee;
+      cursor: not-allowed;
+    }
+    
+    .fc-day-fully-booked {
+      background-color: #ffcdd2 !important;
+    }
+    
+    .fc-day-available:hover {
+      background-color: #e8f5e9 !important;
+    }
+    
+    .fc-event {
+      cursor: pointer;
+      font-size: 0.85em;
+      padding: 2px;
+      border-radius: 3px;
+    }
+    
+    .fc-event.confirmed {
+      background-color: #4CAF50;
+    }
+    
+    .fc-event.pending {
+      background-color: #FFC107;
+    }
+  </style>
+</head>
+<body>
+  <h1>Appointment Scheduler</h1>
+  
+  <div class="container">
+    <!-- Appointment Booking Form -->
+    <div class="form-container">
+      <h2>Book an Appointment</h2>
+      <form id="appointmentForm">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="tel" id="phone" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="date">Date</label>
+          <input type="date" id="date" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="time">Time</label>
+          <input type="time" id="time" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="serviceType">Service Type</label>
+          <select id="serviceType" required>
+            <option value="">Select a service</option>
+            <option value="Consultation">Consultation</option>
+            <option value="Checkup">Checkup</option>
+            <option value="Follow-up">Follow-up</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="notes">Notes</label>
+          <textarea id="notes" rows="3"></textarea>
+        </div>
+        
+        <button type="submit">Schedule Appointment</button>
+      </form>
+    </div>
+    
+    <!-- Calendar Display -->
+    <div class="calendar-container">
+      <h2>Appointment Calendar</h2>
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+  
+  <!-- Main JavaScript -->
+  <script>
+    // Replace with your Google Apps Script Web App URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJlhG5V5g6txFOKsVqWhKWy9LAtF3ltfWzYvtFmWA8_MD-zVSTwqQC-Yhq4pe_wo9N/exec';
+    const MAX_SLOTS_PER_DAY = 5; // Max appointments per day
+
+    // Initialize the calendar when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
+      
+      // FullCalendar configuration
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        dateClick: function(info) {
+          // When a date is clicked, check availability
+          checkDateAvailability(info.dateStr);
+        },
+        events: async function(fetchInfo, successCallback, failureCallback) {
+          // Load appointments for the visible date range
+          try {
+            const response = await fetch(`${SCRIPT_URL}?action=getAppointments&start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`);
+            const result = await response.json();
+            
+            // Format appointments for FullCalendar
+            const events = result.appointments.map(app => ({
+              title: `${app.Name} - ${app['Service Type']}`,
+              start: `${app.Date}T${app.Time}`,
+              color: app.Status === 'Confirmed' ? '#4CAF50' : '#FFC107',
+              className: app.Status === 'Confirmed' ? 'confirmed' : 'pending',
+              extendedProps: {
+                email: app.Email,
+                phone: app.Phone,
+                notes: app.Notes
+              }
+            }));
+            
+            successCallback(events);
+          } catch (error) {
+            failureCallback(error);
+          }
+        },
+        eventClick: function(info) {
+          // Show appointment details when an event is clicked
+          alert(
+            `Appointment Details:\n
+            Name: ${info.event.title}\n
+            Email: ${info.event.extendedProps.email}\n
+            Phone: ${info.event.extendedProps.phone}\n
+            Notes: ${info.event.extendedProps.notes || 'None'}`
+          );
+        }
+      });
+
+      // Render the calendar
+      calendar.render();
+      
+      // Highlight fully booked dates
+      highlightBookedDates(calendar);
+      
+      // Update highlights when calendar view changes
+      calendar.on('datesSet', function() {
+        highlightBookedDates(calendar);
+      });
+      
+      // Handle form submission
+      document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const appointment = {
+          name: document.getElementById('name').value,
+          email: document.getElementById('email').value,
+          phone: document.getElementById('phone').value,
+          date: document.getElementById('date').value,
+          time: document.getElementById('time').value,
+          serviceType: document.getElementById('serviceType').value,
+          notes: document.getElementById('notes').value
+        };
+        
+        try {
+          const response = await fetch(`${SCRIPT_URL}?action=createAppointment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams(appointment)
+          });
+          
+          const result = await response.json();
+          
+          if (result.error) {
+            alert(`Error: ${result.error}`);
+          } else {
+            alert('Appointment booked successfully!');
+            document.getElementById('appointmentForm').reset();
+            calendar.refetchEvents(); // Refresh calendar
+            highlightBookedDates(calendar); // Update highlights
+          }
+        } catch (error) {
+          alert('Failed to book appointment. Please try again.');
+          console.error(error);
+        }
+      });
+    });
+    
+    // Check if a date is available
+    async function checkDateAvailability(dateStr) {
+      try {
+        const response = await fetch(`${SCRIPT_URL}?action=getDateAvailability&date=${dateStr}&maxSlots=${MAX_SLOTS_PER_DAY}`);
+        const result = await response.json();
+        
+        if (result.available) {
+          alert(`📅 ${dateStr} has ${MAX_SLOTS_PER_DAY - result.bookedCount} slots left!`);
+          document.getElementById('date').value = dateStr; // Auto-fill form
+        } else {
+          alert(`❌ ${dateStr} is fully booked.`);
+        }
+      } catch (error) {
+        console.error('Error checking availability:', error);
+      }
+    }
+    
+    // Highlight fully booked dates in red
+    async function highlightBookedDates(calendar) {
+      const currentView = calendar.view;
+      const start = currentView.activeStart;
+      const end = currentView.activeEnd;
+      
+      // Clear previous highlights
+      document.querySelectorAll('.fc-day-fully-booked').forEach(el => {
+        el.classList.remove('fc-day-fully-booked');
+      });
+      
+      // Check each date in the visible range
+      const current = new Date(start);
+      while (current <= end) {
+        const dateStr = current.toISOString().split('T')[0];
+        
+        try {
+          const response = await fetch(`${SCRIPT_URL}?action=getDateAvailability&date=${dateStr}&maxSlots=${MAX_SLOTS_PER_DAY}`);
+          const result = await response.json();
+          
+          if (!result.available) {
+            // Highlight the date cell in red
+            const dayEls = document.querySelectorAll(`.fc-day[data-date="${dateStr}"]`);
+            dayEls.forEach(el => el.classList.add('fc-day-fully-booked'));
+          }
+        } catch (error) {
+          console.error('Error checking date:', dateStr, error);
+        }
+        
+        current.setDate(current.getDate() + 1);
+      }
+    }
+  </script>
+</body>
+</html>
