@@ -248,15 +248,15 @@
 
   <script>
     let currentMeetings = []; // Store loaded meetings data
-    let selectedMeeting = null; // Track selected meeting
+    let selectedMeetingId = null; // Track selected meeting
     
     // Load meetings when page loads
     document.addEventListener('DOMContentLoaded', () => {
       // Add click event to table rows
       document.querySelector('#meetingsTable tbody').addEventListener('click', function(e) {
         const row = e.target.closest('tr');
-        if (!row || row.rowIndex === 0 || !row.dataset.meetingId) return; // Skip header and empty rows
-
+        if (!row || !row.dataset.meetingId) return; // Skip if no meeting ID
+        
         selectMeetingRow(row);
       });
     });
@@ -269,13 +269,16 @@
       
       // Add selection to clicked row
       row.classList.add('selected');
+
+      // Store the selected meeting ID
+      selectedMeetingId = row.dataset.meetingId;
       
       // Find the selected meeting in our data
-      selectedMeeting = currentMeetings.find(m => m.id === row.dataset.meetingId);
+      const meeting = currentMeetings.find(m => m.id === selectedMeetingId);
       
-      if (selectedMeeting) {
+      if (meeting) {
         // Display meeting info
-        displaySelectedMeetingInfo(selectedMeeting);
+        displaySelectedMeetingInfo(meeting);
         
         // Show delete button
         document.getElementById('deleteSelectedBtn').style.display = 'block';
@@ -284,11 +287,6 @@
     
     function displaySelectedMeetingInfo(meeting) {
       const infoBox = document.getElementById('selectedMeetingInfo');
-      
-      if (!meeting) {
-        infoBox.style.display = 'none';
-        return;
-      }
       
       // Format the date
       let formattedDateTime = 'Not scheduled';
@@ -324,9 +322,7 @@
       
       // Show loading state
       tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading meetings...</td></tr>';
-      selectedMeeting = null;
-      document.getElementById('selectedMeetingInfo').style.display = 'none';
-      document.getElementById('deleteSelectedBtn').style.display = 'none';
+      clearSelection();
       
       try {
         const PROXY_URL = 'https://cloudflareworker.chengkiat-ck.workers.dev/';
@@ -379,7 +375,7 @@
       
       meetings.forEach(meeting => {
         const tr = document.createElement('tr');
-        tr.dataset.meetingId = meeting.id; // Store meeting ID in data attribute
+        tr.dataset.meetingId = meeting.id; // Ensure meeting ID is set
 
         // Handle meeting date display
         let dateDisplay = 'Not scheduled';
@@ -408,12 +404,11 @@
     }
     
     async function deleteSelectedMeeting() {
-      if (!selectedMeeting) return;
+      if (!selectedMeetingId) return;
       
       const messageEl = document.getElementById('message');
       const deleteBtn = document.getElementById('deleteSelectedBtn');
-      const infoBox = document.getElementById('selectedMeetingInfo');
-      
+    
       try {
         deleteBtn.disabled = true;
         messageEl.style.display = 'none';
@@ -427,7 +422,7 @@
           body: JSON.stringify({
             function: 'deleteMeeting',
             payload: {
-              id: selectedMeeting.id
+              id: selectedMeetingId
             }
           })
         });
@@ -439,7 +434,7 @@
         }
         
         // Remove the deleted meeting from local data
-        currentMeetings = currentMeetings.filter(m => m.id !== selectedMeeting.id);
+        currentMeetings = currentMeetings.filter(m => m.id !== selectedMeetingId);
         displayMeetings(currentMeetings);
         
         // Clear selection
@@ -461,6 +456,7 @@
         deleteBtn.disabled = false;
       }
     }
+    
     function clearSelection() {
       // Clear visual selection
       document.querySelectorAll('#meetingsTable tbody tr').forEach(r => {
@@ -471,8 +467,8 @@
       document.getElementById('selectedMeetingInfo').style.display = 'none';
       document.getElementById('deleteSelectedBtn').style.display = 'none';
       
-      // Reset selected meeting
-      selectedMeeting = null;
+      // Reset selected meeting ID
+      selectedMeetingId = null;
     }
   </script>
 </body>
