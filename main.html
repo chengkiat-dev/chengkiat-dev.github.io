@@ -68,6 +68,12 @@
         <option value="Takapuna">Takapuna</option>
       </select>
     </div>
+
+    <!-- New Date Input Field -->
+    <div class="form-group">
+      <label for="meetingDate">Meeting Date:</label>
+      <input type="date" id="meetingDate" required>
+    </div>
     
     <div class="form-group">
       <label for="participants">Number of Participants:</label>
@@ -85,6 +91,7 @@
       
       // Get form values
       const district = document.getElementById('district').value;
+      const meetingDate = document.getElementById('meetingDate').value;
       const participants = document.getElementById('participants').value;
       const messageEl = document.getElementById('message');
       const button = document.querySelector('button');
@@ -106,7 +113,8 @@
             function: 'createMeeting',
             payload: {
               district: district,
-              numPart: parseInt(participants)
+              numPart: parseInt(participants),
+              meetingDate: meetingDate  // Added date to payload
             }
           })
         });
@@ -123,7 +131,9 @@
           <strong>Meeting Created Successfully!</strong><br>
           ID: ${result.meetingId}<br>
           District: ${district}<br>
+          Date: ${new Date(meetingDate).toLocaleDateString()}<br>
           Participants: ${participants}
+          
         `;
         
         // Reset form
