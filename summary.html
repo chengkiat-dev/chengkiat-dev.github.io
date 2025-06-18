@@ -186,13 +186,15 @@
         
         // Format date for display
         const date = new Date(meeting[4]);
-        const formattedDate = date.toLocaleDateString('en-US', {
+        const formattedDate = isNaN(meetingDate.getTime()) 
+          ? 'Date not available' 
+          : meetingDate.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
-        });
+          });
         
         tr.innerHTML = `
           <td data-label="Meeting Date">${formattedDate}</td>
