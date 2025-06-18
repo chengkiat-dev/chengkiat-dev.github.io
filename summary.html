@@ -180,14 +180,17 @@
         tbody.appendChild(tr);
         return;
       }
+
+      // Debug: log the first meeting to verify structure
+      console.log("First meeting:", meetings[0]);
       
       meetings.forEach(meeting => {
         const tr = document.createElement('tr');
 
         // Handle meeting date display
         let dateDisplay = 'Not scheduled';
-        if (meeting.meetingData && meeting.meetingData.trim() !== '') {
-          const meetingDate = new Date(meeting.meetingData);
+        if (meeting.meetingDate && meeting.meetingDate.trim() !== '') {
+          const meetingDate = new Date(meeting.meetingDate);
           if (!isNaN(meetingDate.getTime())) {
             dateDisplay = meetingDate.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -198,8 +201,7 @@
           });
         }
       }
-       
-    
+        
       tr.innerHTML = `
         <td data-label="Meeting Date">${dateDisplay}</td>
         <td data-label="District">${meeting.district || 'N/A'}</td>
