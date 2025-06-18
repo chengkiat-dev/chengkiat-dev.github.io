@@ -437,9 +437,6 @@
         currentMeetings = currentMeetings.filter(m => m.id !== selectedMeetingId);
         displayMeetings(currentMeetings);
         
-        // Clear selection
-        clearSelection();
-        
         // Show success message
         messageEl.className = 'success';
         messageEl.innerHTML = `
@@ -448,6 +445,9 @@
           <div>Timestamp: ${new Date(result.timestamp).toLocaleString()}</div>
         `;
         messageEl.style.display = 'block';
+
+         // Clear selection
+        clearSelection();
         
       } catch (error) {
         messageEl.className = 'error';
