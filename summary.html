@@ -48,22 +48,13 @@
       background-color: #f9f9f9;
     }
     
+    /* CHANGED: Removed column hover effect and enhanced row hover */
     tr:hover {
-      background-color: #f1f1f1;
+      background-color: #e0e0e0; /* Darker hover color for better visibility */
+      cursor: pointer; /* Changes cursor to pointer when hovering over row */
     }
     
-    /* Highlight current column on hover */
-    td:hover::after,
-    th:hover::after {
-      content: "";
-      position: absolute;
-      background-color: rgba(200, 200, 255, 0.2);
-      left: 0;
-      top: -5000px;
-      height: 10000px;
-      width: 100%;
-      z-index: -1;
-    }
+    /* REMOVED: The column highlighting CSS that was here before */
     
     /* Form styling */
     .form-group {
