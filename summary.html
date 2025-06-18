@@ -183,24 +183,27 @@
       
       meetings.forEach(meeting => {
         const tr = document.createElement('tr');
-        
-        // Format date for display
-        const meetingDate = new Date(meeting[4]);
-        const formattedDate = isNaN(meetingDate.getTime()) 
-          ? 'Date not available' 
-          : meetingDate.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-          });
-        
-        tr.innerHTML = `
-          <td data-label="Meeting Date">${formattedDate}</td>
-          <td data-label="District">${meeting[2]}</td>
-          <td data-label="Participants">${meeting[3]}</td>
-          <td data-label="Type">${meeting[5]}</td>
+       
+       // Format meeting date - handle empty values
+        let formattedDate = 'Not scheduled';
+        if (meeting[4] && meeting[4].trim() !== '') {
+          const meetingDate = new Date(meeting[4]);
+          if (!isNaN(meetingDate.getTime())) {
+            formattedDate = meetingDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
+        }
+    
+      tr.innerHTML = `
+        <td data-label="Meeting Date">${formattedDate}</td>
+        <td data-label="District">${meeting[2] || ''}</td>
+        <td data-label="Participants">${meeting[3] || ''}</td>
+        <td data-label="Type">${meeting[5] || ''}</td>
         `;
         
         tbody.appendChild(tr);
