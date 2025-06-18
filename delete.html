@@ -434,7 +434,8 @@
         }
         
         // Remove the deleted meeting from local data
-        currentMeetings = currentMeetings.filter(m => m.id !== selectedMeetingId);
+        loadMeetings();
+        //currentMeetings = currentMeetings.filter(m => m.id !== selectedMeetingId);
         displayMeetings(currentMeetings);
         
         // Show success message
