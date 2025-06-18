@@ -461,6 +461,19 @@
         deleteBtn.disabled = false;
       }
     }
+    function clearSelection() {
+      // Clear visual selection
+      document.querySelectorAll('#meetingsTable tbody tr').forEach(r => {
+        r.classList.remove('selected');
+      });
+
+      // Hide info box and delete button
+      document.getElementById('selectedMeetingInfo').style.display = 'none';
+      document.getElementById('deleteSelectedBtn').style.display = 'none';
+      
+      // Reset selected meeting
+      selectedMeeting = null;
+    }
   </script>
 </body>
 </html>
