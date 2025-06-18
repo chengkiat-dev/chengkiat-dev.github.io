@@ -52,6 +52,13 @@
       color: #d93025;
       display: block !important;
     }
+    .datetime-container {
+      display: flex;
+      gap: 10px;
+    }
+    .datetime-container > div {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -69,11 +76,17 @@
       </select>
     </div>
 
-    <!-- New Date Input Field -->
+    <!-- New Date and Time Input Field -->
     <div class="form-group">
-      <label for="meetingDate">Meeting Date:</label>
-      <input type="date" id="meetingDate" required>
-    </div>
+      <label>Meeting Date & Time:</label>
+      <div class="datetime-container">
+        <div>
+          <input type="date" id="meetingDate" required>
+        </div>
+        <div>
+          <input type="time" id="meetingTime" required>
+        </div>
+      </div>
     
     <div class="form-group">
       <label for="participants">Number of Participants:</label>
@@ -91,10 +104,14 @@
       
       // Get form values
       const district = document.getElementById('district').value;
-      const meetingDate = document.getElementById('meetingDate').value;
+      const date = document.getElementById('meetingDate').value;
+      const time = document.getElementById('meetingTime').value;
       const participants = document.getElementById('participants').value;
       const messageEl = document.getElementById('message');
       const button = document.querySelector('button');
+
+      // Combine date and time into ISO format
+      const meetingDateTime = new Date(`${date}T${time}`).toISOString();
       
       // Show loading state
       button.disabled = true;
@@ -114,7 +131,7 @@
             payload: {
               district: district,
               numPart: parseInt(participants),
-              meetingDate: meetingDate  // Added date to payload
+              meetingDate: meetingDateTime  // Added date to payload
             }
           })
         });
@@ -124,6 +141,18 @@
         if (result.error) {
           throw new Error(result.message);
         }
+
+        // Format date/time for display
+        const options = { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        };
+        const formattedDateTime = new Date(meetingDateTime).toLocaleDateString('en-US', options);
+        
         
         // Show success
         messageEl.className = 'success';
@@ -131,7 +160,7 @@
           <strong>Meeting Created Successfully!</strong><br>
           ID: ${result.meetingId}<br>
           District: ${district}<br>
-          Date: ${new Date(meetingDate).toLocaleDateString()}<br>
+          Date/Time: ${formattedDateTime}<br>
           Participants: ${participants}
           
         `;
@@ -149,6 +178,16 @@
         button.textContent = 'Create Meeting';
       }
     });
+        
+    // Set default date to today and time to next full hour
+    const now = new Date();
+    document.getElementById('meetingDate').valueAsDate = now;
+    
+    const nextHour = new Date(now);
+    nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+    document.getElementById('meetingTime').value = 
+      nextHour.toTimeString().substring(0, 5);
+
   </script>
 </body>
 </html>
