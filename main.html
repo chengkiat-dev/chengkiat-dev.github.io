@@ -36,12 +36,38 @@
     button:hover {
       background: #3367d6;
     }
+    
     #message {
-      margin-top: 20px;
-      padding: 10px;
-      border-radius: 4px;
-      display: none;
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 4px;
+    display: none;
+    font-size: 14px; /* Base font size */
+    line-height: 1.4;
     }
+
+    /* Mobile-specific styles */
+    @media only screen and (max-width: 600px) {
+    #message {
+    font-size: 12px; /* Smaller font for mobile */
+    padding: 8px;
+    }
+  
+    #message strong {
+    font-size: 14px; /* Slightly larger for heading */
+    display: block;
+    margin-bottom: 5px;
+    }
+  
+    #message br {
+    display: none; /* Remove line breaks */
+    }
+  
+    #message > div {
+    margin-bottom: 3px; /* Add spacing between lines */
+    }
+    }
+    
     .success {
       background: #e6f4ea;
       color: #137333;
@@ -170,14 +196,12 @@
         // Show success
         messageEl.className = 'success';
         messageEl.innerHTML = `
-          <strong>Meeting Created Successfully!</strong><br>
-          ID: ${result.meetingId}<br>
-          District: ${district}<br>
-          Type: ${meetingType}<br>
-          Date/Time: ${formattedDateTime}<br>
-          Participants: ${participants}
-          
-        `;
+        <div><strong>✓ Meeting Created</strong></div>
+        <div>ID: ${result.meetingId}</div>
+        <div>District: ${district}</div>
+        <div>Type: ${meetingType}</div>
+        <div>When: ${formattedDateTime}</div>
+        <div>Participants: ${participants}</div>
         
         // Reset form
         document.getElementById('meetingForm').reset();
