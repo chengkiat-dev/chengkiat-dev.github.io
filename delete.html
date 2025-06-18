@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Meeting List</title>
+  <title>Delete Meeting</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -256,25 +256,31 @@
       document.querySelector('#meetingsTable tbody').addEventListener('click', function(e) {
         const row = e.target.closest('tr');
         if (!row || row.rowIndex === 0 || !row.dataset.meetingId) return; // Skip header and empty rows
-        
-        // Remove selection from all rows
-        document.querySelectorAll('#meetingsTable tbody tr').forEach(r => {
-          r.classList.remove('selected');
-        });
-        
-        // Add selection to clicked row
-        row.classList.add('selected');
-        
-        // Find the selected meeting in our data
-        selectedMeeting = currentMeetings.find(m => m.id === row.dataset.meetingId);
-        
+
+        selectMeetingRow(row);
+      });
+    });
+
+    function selectMeetingRow(row) {
+      // Remove selection from all rows
+      document.querySelectorAll('#meetingsTable tbody tr').forEach(r => {
+        r.classList.remove('selected');
+      });
+      
+      // Add selection to clicked row
+      row.classList.add('selected');
+      
+      // Find the selected meeting in our data
+      selectedMeeting = currentMeetings.find(m => m.id === row.dataset.meetingId);
+      
+      if (selectedMeeting) {
         // Display meeting info
         displaySelectedMeetingInfo(selectedMeeting);
         
         // Show delete button
         document.getElementById('deleteSelectedBtn').style.display = 'block';
-      });
-    });
+      }
+    }
     
     function displaySelectedMeetingInfo(meeting) {
       const infoBox = document.getElementById('selectedMeetingInfo');
@@ -406,6 +412,7 @@
       
       const messageEl = document.getElementById('message');
       const deleteBtn = document.getElementById('deleteSelectedBtn');
+      const infoBox = document.getElementById('selectedMeetingInfo');
       
       try {
         deleteBtn.disabled = true;
@@ -436,12 +443,7 @@
         displayMeetings(currentMeetings);
         
         // Clear selection
-        document.querySelectorAll('#meetingsTable tbody tr').forEach(r => {
-          r.classList.remove('selected');
-        });
-        document.getElementById('selectedMeetingInfo').style.display = 'none';
-        deleteBtn.style.display = 'none';
-        selectedMeeting = null;
+        clearSelection();
         
         // Show success message
         messageEl.className = 'success';
