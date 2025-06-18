@@ -5,7 +5,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -13,89 +13,158 @@
       text-align: center;
       margin-bottom: 20px;
     }
+    
+    /* Spreadsheet-like table styling */
+    .table-container {
+      max-height: 600px;
+      overflow: auto;
+      border: 1px solid #ddd;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      table-layout: fixed;
     }
+    
     th, td {
-      padding: 12px;
+      padding: 12px 15px;
       text-align: left;
-      border-bottom: 1px solid #ddd;
+      border: 1px solid #ddd;
     }
+    
     th {
-      background-color: #f2f2f2;
+      background-color: #f8f8f8;
       font-weight: bold;
+      position: sticky;
+      top: 0;
+      box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+      z-index: 10;
     }
+    
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    
     tr:hover {
-      background-color: #f5f5f5;
+      background-color: #f1f1f1;
     }
+    
+    /* Highlight current column on hover */
+    td:hover::after,
+    th:hover::after {
+      content: "";
+      position: absolute;
+      background-color: rgba(200, 200, 255, 0.2);
+      left: 0;
+      top: -5000px;
+      height: 10000px;
+      width: 100%;
+      z-index: -1;
+    }
+    
+    /* Form styling */
     .form-group {
       margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+    
     label {
-      display: block;
-      margin-bottom: 5px;
       font-weight: bold;
+      white-space: nowrap;
     }
+    
     select {
-      width: 100%;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
-      box-sizing: border-box;
+      min-width: 200px;
     }
+    
     button {
       background: #4285f4;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 10px 20px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
+      transition: background 0.3s;
     }
+    
     button:hover {
       background: #3367d6;
     }
+    
     #message {
       margin-top: 20px;
       padding: 10px;
       border-radius: 4px;
       display: none;
     }
+    
     .success {
       background: #e6f4ea;
       color: #137333;
       display: block !important;
     }
+    
     .error {
       background: #fce8e6;
       color: #d93025;
       display: block !important;
     }
-    @media only screen and (max-width: 600px) {
-      table, thead, tbody, th, td, tr {
+    
+    /* Mobile responsiveness */
+    @media only screen and (max-width: 768px) {
+      .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      select {
+        width: 100%;
+      }
+      
+      .table-container {
+        border: none;
+      }
+      
+      table {
         display: block;
       }
-      thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
+      
+      thead {
+        display: none;
       }
+      
       tr {
+        display: block;
         margin-bottom: 15px;
         border: 1px solid #ddd;
       }
+      
       td {
-        border: none;
-        position: relative;
+        display: block;
+        text-align: right;
         padding-left: 50%;
+        position: relative;
+        border: none;
+        border-bottom: 1px solid #eee;
       }
-      td:before {
-        position: absolute;
-        left: 6px;
+      
+      td::before {
         content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        padding-right: 10px;
         font-weight: bold;
+        text-align: left;
       }
     }
   </style>
@@ -103,9 +172,9 @@
 <body>
   <h1>Meeting Records</h1>
   
-  <!-- District Filter -->
+  <!-- Filter Controls -->
   <div class="form-group">
-    <label for="filterDistrict">Filter by District:</label>
+    <label for="filterDistrict">District:</label>
     <select id="filterDistrict">
       <option value="">All Districts</option>
       <option value="Aroha">Aroha</option>
@@ -113,25 +182,28 @@
       <option value="Glory">Glory</option>
       <option value="Takapuna">Takapuna</option>
     </select>
+    <button type="button" onclick="loadMeetings()">Load Meetings</button>
   </div>
   
-  <!-- Submit Button -->
-  <button type="button" onclick="loadMeetings()">Load Meetings</button>
-  
-  <!-- Meeting Table -->
-  <table id="meetingsTable">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>District</th>
-        <th>Participants</th>
-        <th>Type</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Data will be loaded here -->
-    </tbody>
-  </table>
+  <!-- Table Container -->
+  <div class="table-container">
+    <table id="meetingsTable">
+      <thead>
+        <tr>
+          <th style="width: 25%">Date</th>
+          <th style="width: 20%">District</th>
+          <th style="width: 15%">Participants</th>
+          <th style="width: 40%">Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data will be loaded here -->
+        <tr>
+          <td colspan="4" style="text-align: center;">Select filters and click "Load Meetings"</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
   
   <div id="message"></div>
 
@@ -139,6 +211,10 @@
     async function loadMeetings() {
       const districtFilter = document.getElementById('filterDistrict').value;
       const messageEl = document.getElementById('message');
+      const tbody = document.querySelector('#meetingsTable tbody');
+      
+      // Show loading state
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading meetings...</td></tr>';
       
       try {
         const PROXY_URL = 'https://cloudflareworker.chengkiat-ck.workers.dev/';
@@ -163,10 +239,17 @@
         
         displayMeetings(result.data);
         
+        // Show success message
+        messageEl.className = 'success';
+        messageEl.textContent = `Loaded ${result.data.length} meetings`;
+        messageEl.style.display = 'block';
+        
       } catch (error) {
         messageEl.className = 'error';
         messageEl.textContent = `Error: ${error.message}`;
         messageEl.style.display = 'block';
+        
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Failed to load meetings</td></tr>';
       }
     }
     
@@ -180,9 +263,6 @@
         tbody.appendChild(tr);
         return;
       }
-
-      // Debug: log the first meeting to verify structure
-      console.log("First meeting:", meetings[0]);
       
       meetings.forEach(meeting => {
         const tr = document.createElement('tr');
@@ -193,21 +273,21 @@
           const meetingDate = new Date(meeting.meetingDate);
           if (!isNaN(meetingDate.getTime())) {
             dateDisplay = meetingDate.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          });
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
         }
-      }
         
-      tr.innerHTML = `
-        <td data-label="Meeting Date">${dateDisplay}</td>
-        <td data-label="District">${meeting.district || 'N/A'}</td>
-        <td data-label="Participants">${meeting.numPart || '0'}</td>
-        <td data-label="Type">${meeting.meetingType || 'Not specified'}</td>
-      `;
+        tr.innerHTML = `
+          <td data-label="Date">${dateDisplay}</td>
+          <td data-label="District">${meeting.district || 'N/A'}</td>
+          <td data-label="Participants">${meeting.numPart || '0'}</td>
+          <td data-label="Type">${meeting.meetingType || 'Not specified'}</td>
+        `;
         
         tbody.appendChild(tr);
       });
