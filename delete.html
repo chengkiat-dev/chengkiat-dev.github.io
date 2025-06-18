@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Meeting List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    /* Spreadsheet-like table styling */
+    .table-container {
+      max-height: 600px;
+      overflow: auto;
+      border: 1px solid #ddd;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    
+    th {
+      background-color: #f8f8f8;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    
+    /* Row selection styling */
+    tr.selected {
+      background-color: #d4e6f1 !important; /* Light blue for selected row */
+    }
+    
+    tr:hover {
+      background-color: #e0e0e0;
+      cursor: pointer;
+    }
+    
+    /* Selected meeting info box */
+    .selected-meeting-info {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      background-color: #e6f4ea;
+      border: 1px solid #137333;
+      display: none;
+    }
+    
+    .selected-meeting-info div {
+      margin-bottom: 5px;
+    }
+    
+    .selected-meeting-info strong {
+      color: #137333;
+    }
+    
+    /* Delete button */
+    .delete-selected-btn {
+      margin-top: 10px;
+      background: #d32f2f;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    
+    .delete-selected-btn:hover {
+      background: #b71c1c;
+    }
+    
+    /* Form styling */
+    .form-group {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    label {
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    
+    select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-width: 200px;
+    }
+    
+    button {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #3367d6;
+    }
+    
+    #message {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    .success {
+      background: #e6f4ea;
+      color: #137333;
+      display: block !important;
+    }
+    
+    .error {
+      background: #fce8e6;
+      color: #d93025;
+      display: block !important;
+    }
+    
+    /* Mobile responsiveness */
+    @media only screen and (max-width: 768px) {
+      .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      select {
+        width: 100%;
+      }
+      
+      .table-container {
+        border: none;
+      }
+      
+      table {
+        display: block;
+      }
+      
+      thead {
+        display: none;
+      }
+      
+      tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+      }
+      
+      td {
+        display: block;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border: none;
+        border-bottom: 1px solid #eee;
+      }
+      
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        padding-right: 10px;
+        font-weight: bold;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Meeting Records</h1>
+  
+  <!-- Filter Controls -->
+  <div class="form-group">
+    <label for="filterDistrict">District:</label>
+    <select id="filterDistrict">
+      <option value="">All Districts</option>
+      <option value="Aroha">Aroha</option>
+      <option value="Moana">Moana</option>
+      <option value="Glory">Glory</option>
+      <option value="Takapuna">Takapuna</option>
+    </select>
+    <button type="button" onclick="loadMeetings()">Load Meetings</button>
+  </div>
+  
+  <!-- Table Container -->
+  <div class="table-container">
+    <table id="meetingsTable">
+      <thead>
+        <tr>
+          <th style="width: 25%">Date</th>
+          <th style="width: 20%">District</th>
+          <th style="width: 15%">Participants</th>
+          <th style="width: 40%">Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data will be loaded here -->
+        <tr>
+          <td colspan="4" style="text-align: center;">Select filters and click "Load Meetings"</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Selected Meeting Info -->
+  <div id="selectedMeetingInfo" class="selected-meeting-info">
+    <!-- Info will be populated here when a meeting is selected -->
+  </div>
+  
+  <!-- Delete Button -->
+  <button id="deleteSelectedBtn" class="delete-selected-btn" onclick="deleteSelectedMeeting()" style="display: none;">
+    Delete Selected Meeting
+  </button>
+  
+  <!-- Message Box -->
+  <div id="message"></div>
+
+  <script>
+    let currentMeetings = []; // Store loaded meetings data
+    let selectedMeeting = null; // Track selected meeting
+    
+    // Load meetings when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add click event to table rows
+      document.querySelector('#meetingsTable tbody').addEventListener('click', function(e) {
+        const row = e.target.closest('tr');
+        if (!row || row.rowIndex === 0 || !row.dataset.meetingId) return; // Skip header and empty rows
+        
+        // Remove selection from all rows
+        document.querySelectorAll('#meetingsTable tbody tr').forEach(r => {
+          r.classList.remove('selected');
+        });
+        
+        // Add selection to clicked row
+        row.classList.add('selected');
+        
+        // Find the selected meeting in our data
+        selectedMeeting = currentMeetings.find(m => m.id === row.dataset.meetingId);
+        
+        // Display meeting info
+        displaySelectedMeetingInfo(selectedMeeting);
+        
+        // Show delete button
+        document.getElementById('deleteSelectedBtn').style.display = 'block';
+      });
+    });
+    
+    function displaySelectedMeetingInfo(meeting) {
+      const infoBox = document.getElementById('selectedMeetingInfo');
+      
+      if (!meeting) {
+        infoBox.style.display = 'none';
+        return;
+      }
+      
+      // Format the date
+      let formattedDateTime = 'Not scheduled';
+      if (meeting.meetingDate && meeting.meetingDate.trim() !== '') {
+        const meetingDate = new Date(meeting.meetingDate);
+        if (!isNaN(meetingDate.getTime())) {
+          formattedDateTime = meetingDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+      }
+      
+      infoBox.innerHTML = `
+        <div><strong>✓ Meeting Selected</strong></div>
+        <div>ID: ${meeting.id || 'N/A'}</div>
+        <div>District: ${meeting.district || 'N/A'}</div>
+        <div>Type: ${meeting.meetingType || 'Not specified'}</div>
+        <div>When: ${formattedDateTime}</div>
+        <div>Participants: ${meeting.numPart || '0'}</div>
+      `;
+      
+      infoBox.style.display = 'block';
+    }
+    
+    async function loadMeetings() {
+      const districtFilter = document.getElementById('filterDistrict').value;
+      const messageEl = document.getElementById('message');
+      const tbody = document.querySelector('#meetingsTable tbody');
+      
+      // Show loading state
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading meetings...</td></tr>';
+      selectedMeeting = null;
+      document.getElementById('selectedMeetingInfo').style.display = 'none';
+      document.getElementById('deleteSelectedBtn').style.display = 'none';
+      
+      try {
+        const PROXY_URL = 'https://cloudflareworker.chengkiat-ck.workers.dev/';
+        const response = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            function: 'listMeetings',
+            payload: {
+              district: districtFilter
+            }
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          throw new Error(result.message);
+        }
+        
+        currentMeetings = result.data; // Store meetings data
+        displayMeetings(currentMeetings);
+        
+        // Show success message
+        messageEl.className = 'success';
+        messageEl.textContent = `Loaded ${result.data.length} meetings`;
+        messageEl.style.display = 'block';
+        
+      } catch (error) {
+        messageEl.className = 'error';
+        messageEl.textContent = `Error: ${error.message}`;
+        messageEl.style.display = 'block';
+        
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Failed to load meetings</td></tr>';
+      }
+    }
+    
+    function displayMeetings(meetings) {
+      const tbody = document.querySelector('#meetingsTable tbody');
+      tbody.innerHTML = '';
+      
+      if (!meetings || meetings.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="4" style="text-align:center;">No meetings found</td>';
+        tbody.appendChild(tr);
+        return;
+      }
+      
+      meetings.forEach(meeting => {
+        const tr = document.createElement('tr');
+        tr.dataset.meetingId = meeting.id; // Store meeting ID in data attribute
+
+        // Handle meeting date display
+        let dateDisplay = 'Not scheduled';
+        if (meeting.meetingDate && meeting.meetingDate.trim() !== '') {
+          const meetingDate = new Date(meeting.meetingDate);
+          if (!isNaN(meetingDate.getTime())) {
+            dateDisplay = meetingDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
+        }
+        
+        tr.innerHTML = `
+          <td data-label="Date">${dateDisplay}</td>
+          <td data-label="District">${meeting.district || 'N/A'}</td>
+          <td data-label="Participants">${meeting.numPart || '0'}</td>
+          <td data-label="Type">${meeting.meetingType || 'Not specified'}</td>
+        `;
+        
+        tbody.appendChild(tr);
+      });
+    }
+    
+    async function deleteSelectedMeeting() {
+      if (!selectedMeeting) return;
+      
+      const messageEl = document.getElementById('message');
+      const deleteBtn = document.getElementById('deleteSelectedBtn');
+      
+      try {
+        deleteBtn.disabled = true;
+        messageEl.style.display = 'none';
+        
+        const PROXY_URL = 'https://cloudflareworker.chengkiat-ck.workers.dev/';
+        const response = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            function: 'deleteMeeting',
+            payload: {
+              id: selectedMeeting.id
+            }
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          throw new Error(result.message);
+        }
+        
+        // Remove the deleted meeting from local data
+        currentMeetings = currentMeetings.filter(m => m.id !== selectedMeeting.id);
+        displayMeetings(currentMeetings);
+        
+        // Clear selection
+        document.querySelectorAll('#meetingsTable tbody tr').forEach(r => {
+          r.classList.remove('selected');
+        });
+        document.getElementById('selectedMeetingInfo').style.display = 'none';
+        deleteBtn.style.display = 'none';
+        selectedMeeting = null;
+        
+        // Show success message
+        messageEl.className = 'success';
+        messageEl.innerHTML = `
+          <div><strong>✓ Meeting Deleted</strong></div>
+          <div>ID: ${result.deletedId}</div>
+          <div>Timestamp: ${new Date(result.timestamp).toLocaleString()}</div>
+        `;
+        messageEl.style.display = 'block';
+        
+      } catch (error) {
+        messageEl.className = 'error';
+        messageEl.textContent = `Error: ${error.message}`;
+        messageEl.style.display = 'block';
+        deleteBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
