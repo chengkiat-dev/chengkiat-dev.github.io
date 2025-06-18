@@ -106,7 +106,7 @@
   <!-- District Filter -->
   <div class="form-group">
     <label for="filterDistrict">Filter by District:</label>
-    <select id="filterDistrict" onchange="loadMeetings()">
+    <select id="filterDistrict">
       <option value="">All Districts</option>
       <option value="Aroha">Aroha</option>
       <option value="Moana">Moana</option>
@@ -114,6 +114,9 @@
       <option value="Takapuna">Takapuna</option>
     </select>
   </div>
+  
+  <!-- Submit Button -->
+  <button type="button" onclick="loadMeetings()">Load Meetings</button>
   
   <!-- Meeting Table -->
   <table id="meetingsTable">
@@ -133,9 +136,6 @@
   <div id="message"></div>
 
   <script>
-    // Load meetings when page loads
-    document.addEventListener('DOMContentLoaded', loadMeetings);
-    
     async function loadMeetings() {
       const districtFilter = document.getElementById('filterDistrict').value;
       const messageEl = document.getElementById('message');
