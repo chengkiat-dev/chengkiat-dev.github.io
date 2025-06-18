@@ -183,28 +183,29 @@
       
       meetings.forEach(meeting => {
         const tr = document.createElement('tr');
-       
-       // Format meeting date - handle empty values
-        let formattedDate = 'Not scheduled';
-        if (meeting[4] && meeting[4].trim() !== '') {
-          const meetingDate = new Date(meeting[4]);
+
+        // Handle meeting date display
+        let dateDisplay = 'Not scheduled';
+        if (meeting.meetingData && meeting.meetingData.trim() !== '') {
+          const meetingDate = new Date(meeting.meetingData);
           if (!isNaN(meetingDate.getTime())) {
-            formattedDate = meetingDate.toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-          }
+            dateDisplay = meetingDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
         }
+      }
+       
     
       tr.innerHTML = `
-        <td data-label="Meeting Date">${formattedDate}</td>
-        <td data-label="District">${meeting[2] || ''}</td>
-        <td data-label="Participants">${meeting[3] || ''}</td>
-        <td data-label="Type">${meeting[5] || ''}</td>
-        `;
+        <td data-label="Meeting Date">${dateDisplay}</td>
+        <td data-label="District">${meeting.district || 'N/A'}</td>
+        <td data-label="Participants">${meeting.numPart || '0'}</td>
+        <td data-label="Type">${meeting.meetingType || 'Not specified'}</td>
+      `;
         
         tbody.appendChild(tr);
       });
