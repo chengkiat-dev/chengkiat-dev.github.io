@@ -185,7 +185,7 @@
         const tr = document.createElement('tr');
         
         // Format date for display
-        const date = new Date(meeting[1]);
+        const date = new Date(meeting[4]);
         const formattedDate = date.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
@@ -195,10 +195,10 @@
         });
         
         tr.innerHTML = `
-          <td data-label="Date">${formattedDate}</td>
+          <td data-label="Meeting Date">${formattedDate}</td>
           <td data-label="District">${meeting[2]}</td>
-          <td data-label="Participants">${meeting[4]}</td>
-          <td data-label="Type">${meeting[3]}</td>
+          <td data-label="Participants">${meeting[3]}</td>
+          <td data-label="Type">${meeting[5]}</td>
         `;
         
         tbody.appendChild(tr);
