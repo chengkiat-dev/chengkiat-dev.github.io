@@ -434,9 +434,11 @@
         }
         
         // Remove the deleted meeting from local data
-        loadMeetings();
-        //currentMeetings = currentMeetings.filter(m => m.id !== selectedMeetingId);
+        //loadMeetings();
+        currentMeetings = currentMeetings.filter(m => m.id !== selectedMeetingId);
         displayMeetings(currentMeetings);
+
+        clearSelection();
         
         // Show success message
         messageEl.className = 'success';
@@ -446,9 +448,6 @@
           <div>Timestamp: ${new Date(result.timestamp).toLocaleString()}</div>
         `;
         messageEl.style.display = 'block';
-
-         // Clear selection
-        clearSelection();
         
       } catch (error) {
         messageEl.className = 'error';
