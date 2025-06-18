@@ -76,6 +76,17 @@
       </select>
     </div>
 
+    <!-- New Meeting Type Selection -->
+    <div class="form-group">
+      <label for="meetingType">Meeting Type:</label>
+      <select id="meetingType" required>
+        <option value="">Select Type</option>
+        <option value="WPC">WPC</option>
+        <option value="Discussion Meeting">Discussion Meeting</option>
+        <option value="Gosho Meeting">Gosho Meeting</option>
+      </select>
+    </div>
+
     <!-- New Date and Time Input Field -->
     <div class="form-group">
       <label>Meeting Date & Time:</label>
@@ -87,6 +98,7 @@
           <input type="time" id="meetingTime" required>
         </div>
       </div>
+    </div>
     
     <div class="form-group">
       <label for="participants">Number of Participants:</label>
@@ -104,6 +116,7 @@
       
       // Get form values
       const district = document.getElementById('district').value;
+      const meetingType = document.getElementById('meetingType').value;
       const date = document.getElementById('meetingDate').value;
       const time = document.getElementById('meetingTime').value;
       const participants = document.getElementById('participants').value;
@@ -132,6 +145,7 @@
               district: district,
               numPart: parseInt(participants),
               meetingDate: meetingDateTime  // Added date to payload
+              meetingType: meetingType,  // Added meeting type
             }
           })
         });
@@ -152,14 +166,14 @@
           minute: '2-digit'
         };
         const formattedDateTime = new Date(meetingDateTime).toLocaleDateString('en-US', options);
-        
-        
+      
         // Show success
         messageEl.className = 'success';
         messageEl.innerHTML = `
           <strong>Meeting Created Successfully!</strong><br>
           ID: ${result.meetingId}<br>
           District: ${district}<br>
+          Type: ${meetingType}<br>
           Date/Time: ${formattedDateTime}<br>
           Participants: ${participants}
           
