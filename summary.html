@@ -185,7 +185,7 @@
         const tr = document.createElement('tr');
         
         // Format date for display
-        const date = new Date(meeting[4]);
+        const meetingDate = new Date(meeting[4]);
         const formattedDate = isNaN(meetingDate.getTime()) 
           ? 'Date not available' 
           : meetingDate.toLocaleDateString('en-US', {
