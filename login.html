@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-signin-client_id" content="753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com">
     <title>Login - Meeting App</title>
     <style>
         body {
@@ -21,6 +20,11 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
+            width: 350px;
+        }
+        #googleSignInBtn {
+            margin: 0 auto;
+            width: 240px;
         }
         #status {
             margin-top: 20px;
@@ -31,44 +35,59 @@
 <body>
     <div class="login-container">
         <h1>Meeting App Login</h1>
-        <!-- Google Sign-In Button -->
-        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        <!-- Google Sign-In Button Container -->
+        <div id="googleSignInBtn"></div>
         <div id="status"></div>
     </div>
 
-    <!-- Load Google Platform Library -->
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <!-- Load the new Google Identity Services library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <script>
-        // Handle successful sign-in
-        function onSignIn(googleUser) {
+        // Handle login response
+        function handleGoogleLogin(response) {
             document.getElementById('status').textContent = "Signing in...";
             
-            // Get the ID token (for backend verification)
-            const id_token = googleUser.getAuthResponse().id_token;
+            // Store the credential (JWT ID token)
+            sessionStorage.setItem('google_token', response.credential);
             
-            // Store token temporarily (alternative: send to backend)
-            sessionStorage.setItem('google_token', id_token);
-            
-            // Redirect to summary page after 1 second
-            setTimeout(() => {
-                window.location.href = "summary.html";
-            }, 1000);
+            // Redirect to summary page
+            window.location.href = "summary.html";
         }
 
-        // Auto-sign-in check (optional)
-        function checkAuth() {
-            gapi.auth2.init({
-                client_id: '753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com'
-            }).then(() => {
-                if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
-                    window.location.href = "summary.html";
-                }
+        // Initialize Google Auth
+        function initGoogleAuth() {
+            // Check if Google library is loaded
+            if (typeof google === 'undefined') {
+                setTimeout(initGoogleAuth, 100);
+                return;
+            }
+            
+            google.accounts.id.initialize({
+                client_id: '753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com',
+                callback: handleGoogleLogin,
+                auto_select: false,
+                ux_mode: 'redirect' // Optional: change to 'popup' if you prefer
             });
+            
+            // Render the button
+            google.accounts.id.renderButton(
+                document.getElementById("googleSignInBtn"),
+                {
+                    type: "standard",
+                    theme: "outline",
+                    size: "large",
+                    text: "signin_with",
+                    shape: "rectangular"
+                }
+            );
+            
+            // Optional: Display the One Tap prompt
+            // google.accounts.id.prompt();
         }
-        
-        // Initialize auth check when library loads
-        window.onload = checkAuth;
+
+        // Start initialization when page loads
+        window.addEventListener('DOMContentLoaded', initGoogleAuth);
     </script>
 </body>
 </html>
