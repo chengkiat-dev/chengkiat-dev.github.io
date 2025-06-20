@@ -209,50 +209,66 @@
   <script src="https://apis.google.com/js/platform.js" async defer></script>
   
   <script>
+    // DOM elements - defined first
+    const messageEl = document.getElementById('message');
+    const tbody = document.querySelector('#meetingsTable tbody');
+    const filterDistrict = document.getElementById('filterDistrict');
+
     // Initialize Google Auth
-  function initAuth() {
-    google.accounts.id.initialize({
-    client_id: '753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com',
-    callback: (response) => {
-      sessionStorage.setItem('google_token', response.credential);
-      loadMeetings();
+    function initAuth() {
+        if (typeof google === 'undefined' || !google.accounts) {
+            console.error('Google auth library not loaded');
+            return;
+        }
+
+        google.accounts.id.initialize({
+            client_id: '753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com',
+            callback: (response) => {
+                sessionStorage.setItem('google_token', response.credential);
+                loadMeetings();
+            }
+        });
+
+        // Check existing session
+        if (!sessionStorage.getItem('google_token')) {
+            google.accounts.id.prompt();
+        }
     }
-  });
 
-    // Check existing session
-    if (!sessionStorage.getItem('google_token')) {
-      google.accounts.id.prompt();
+    // Load Google library
+    function loadGoogleAuth() {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.onload = resolve;
+            script.onerror = () => {
+                console.error('Failed to load Google auth library');
+                window.location.href = "login.html";
+            };
+            document.head.appendChild(script);
+        });
     }
-}
 
-// Load Google library dynamically
-const script = document.createElement('script');
-script.src = 'https://accounts.google.com/gsi/client';
-script.onload = initAuth;
-document.head.appendChild(script);
-
-// DOM elements
-  const messageEl = document.getElementById('message');
-  const tbody = document.querySelector('#meetingsTable tbody');
-
-    
     // Check authentication on load
-    document.addEventListener('DOMContentLoaded', function() {
-      const token = sessionStorage.getItem('google_token');
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadGoogleAuth();
+        
+        const token = sessionStorage.getItem('google_token');
         if (!token) {
-            // Redirect to login if no token
             window.location.href = "login.html";
             return;
         }
         
-        // You can decode the token to get user info if needed
         try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            document.getElementById('userEmail').textContent = payload.email;
+            const tokenParts = token.split('.');
+            if (tokenParts.length !== 3) throw new Error('Invalid token format');
+            
+            const payload = JSON.parse(atob(tokenParts[1]));
+            document.getElementById('userEmail').textContent = payload.email || 'User';
             loadMeetings();
         } catch (e) {
             console.error('Error parsing token:', e);
-            window.location.href = "login.html";
+            signOut();
         }
     });
 
@@ -260,7 +276,7 @@ document.head.appendChild(script);
     function signOut() {
         sessionStorage.removeItem('google_token');
         window.location.href = "login.html";
-      }
+    }
     
     async function loadMeetings() {
         const token = sessionStorage.getItem('google_token');
@@ -269,90 +285,94 @@ document.head.appendChild(script);
             return;
         }
       
-      // Show loading state
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading meetings...</td></tr>';
+        // Show loading state
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading meetings...</td></tr>';
       
-      try {
-        const PROXY_URL = 'https://cloudflareworker.chengkiat-ck.workers.dev/';
-        const response = await fetch(PROXY_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token  // Send token to backend
-          },
-          body: JSON.stringify({
-            function: 'listMeetings',
-            payload: {
-              document.getElementById('filterDistrict').value
+        try {
+            const PROXY_URL = 'https://cloudflareworker.chengkiat-ck.workers.dev/';
+            const district = filterDistrict.value;
+            
+            const response = await fetch(PROXY_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    function: 'listMeetings',
+                    payload: {
+                        district: district  // Fixed payload structure
+                    }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.error) {
-          throw new Error(result.message);
+            
+            const result = await response.json();
+            
+            if (result.error) {
+                throw new Error(result.message);
+            }
+            
+            displayMeetings(result.data);
+            
+            // Show success message
+            messageEl.className = 'success';
+            messageEl.textContent = `Loaded ${result.data.length} meetings`;
+            messageEl.style.display = 'block';
+            
+        } catch (error) {
+            console.error('Meeting load error:', error);
+            if (error.message.includes('401') || error.message.includes('403')) {
+                window.location.href = "login.html";
+            }
+            messageEl.className = 'error';
+            messageEl.textContent = `Error: ${error.message}`;
+            messageEl.style.display = 'block';
+            
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Failed to load meetings</td></tr>';
         }
-        
-        displayMeetings(result.data);
-        
-        // Show success message
-        messageEl.className = 'success';
-        messageEl.textContent = `Loaded ${result.data.length} meetings`;
-        messageEl.style.display = 'block';
-        
-      } catch (error) {
-        // Handle unauthorized errors
-        if (error.message.includes('401')) {
-          window.location.href = "login.html";
-        }
-        messageEl.className = 'error';
-        messageEl.textContent = `Error: ${error.message}`;
-        messageEl.style.display = 'block';
-        
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Failed to load meetings</td></tr>';
-      }
     }
     
     function displayMeetings(meetings) {
-      const tbody = document.querySelector('#meetingsTable tbody');
-      tbody.innerHTML = '';
+        tbody.innerHTML = '';
       
-      if (!meetings || meetings.length === 0) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td colspan="4" style="text-align:center;">No meetings found</td>';
-        tbody.appendChild(tr);
-        return;
-      }
-      
-      meetings.forEach(meeting => {
-        const tr = document.createElement('tr');
-
-        // Handle meeting date display
-        let dateDisplay = 'Not scheduled';
-        if (meeting.meetingDate && meeting.meetingDate.trim() !== '') {
-          const meetingDate = new Date(meeting.meetingDate);
-          if (!isNaN(meetingDate.getTime())) {
-            dateDisplay = meetingDate.toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-          }
+        if (!meetings || meetings.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="4" style="text-align:center;">No meetings found</td>';
+            tbody.appendChild(tr);
+            return;
         }
-        
-        tr.innerHTML = `
-          <td data-label="Date">${dateDisplay}</td>
-          <td data-label="District">${meeting.district || 'N/A'}</td>
-          <td data-label="Participants">${meeting.numPart || '0'}</td>
-          <td data-label="Type">${meeting.meetingType || 'Not specified'}</td>
-        `;
-        
-        tbody.appendChild(tr);
-      });
+      
+        meetings.forEach(meeting => {
+            const tr = document.createElement('tr');
+            let dateDisplay = 'Not scheduled';
+            
+            if (meeting.meetingDate && meeting.meetingDate.trim() !== '') {
+                const meetingDate = new Date(meeting.meetingDate);
+                if (!isNaN(meetingDate.getTime())) {
+                    dateDisplay = meetingDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            }
+            
+            tr.innerHTML = `
+                <td data-label="Date">${dateDisplay}</td>
+                <td data-label="District">${meeting.district || 'N/A'}</td>
+                <td data-label="Participants">${meeting.numPart || '0'}</td>
+                <td data-label="Type">${meeting.meetingType || 'Not specified'}</td>
+            `;
+            
+            tbody.appendChild(tr);
+        });
     }
-  </script>
+</script>
 </body>
 </html>
