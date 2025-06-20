@@ -213,6 +213,7 @@
     const messageEl = document.getElementById('message');
     const tbody = document.querySelector('#meetingsTable tbody');
     const filterDistrict = document.getElementById('filterDistrict');
+    const loadButton = document.querySelector('button'); // Get the load button
 
     // Initialize Google Auth
     function initAuth() {
@@ -225,13 +226,30 @@
             client_id: '753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com',
             callback: (response) => {
                 sessionStorage.setItem('google_token', response.credential);
-                loadMeetings();
+                //loadMeetings();
+                updateUIWithUserInfo(); // Just update UI after login
             }
         });
 
         // Check existing session
         if (!sessionStorage.getItem('google_token')) {
             google.accounts.id.prompt();
+        }
+    }
+
+    // New function to just update user info without loading data
+    function updateUIWithUserInfo() {
+        const token = sessionStorage.getItem('google_token');
+        if (token) {
+            try {
+                const tokenParts = token.split('.');
+                if (tokenParts.length === 3) {
+                    const payload = JSON.parse(atob(tokenParts[1]));
+                    document.getElementById('userEmail').textContent = payload.email || 'User';
+                }
+            } catch (e) {
+                console.error('Error parsing token:', e);
+            }
         }
     }
 
@@ -258,18 +276,12 @@
             window.location.href = "login.html";
             return;
         }
+
+        // Just update UI, don't load data
+        updateUIWithUserInfo();
         
-        try {
-            const tokenParts = token.split('.');
-            if (tokenParts.length !== 3) throw new Error('Invalid token format');
-            
-            const payload = JSON.parse(atob(tokenParts[1]));
-            document.getElementById('userEmail').textContent = payload.email || 'User';
-            loadMeetings();
-        } catch (e) {
-            console.error('Error parsing token:', e);
-            signOut();
-        }
+        // Set up button click handler
+        loadButton.addEventListener('click', loadMeetings);
     });
 
     // Sign out function
