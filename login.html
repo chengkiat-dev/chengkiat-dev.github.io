@@ -43,12 +43,42 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <script>
-        function handleGoogleLogin(response) {
+        // List of allowed emails (edit this array)
+        const ALLOWED_EMAILS = [
+        "chengkiat.ck@gmail.com"
+          ];
+        
+        //function handleGoogleLogin(response) {
             // Store the credential
-            sessionStorage.setItem('google_token', response.credential);
+         //   sessionStorage.setItem('google_token', response.credential);
             // Redirect to summary page
+         //   window.location.href = "summary.html";
+        //}
+        function handleGoogleLogin(response) {
+            try {
+              // Decode the Google ID token to get the user's email
+              const payload = JSON.parse(atob(response.credential.split('.')[1]));
+              const userEmail = payload.email;
+
+              // Check if email is allowed
+              if (!ALLOWED_EMAILS.includes(userEmail)) {
+                document.getElementById('status').textContent = "Access denied: Your email is not authorized.";
+                document.getElementById('status').style.color = "#d93025";
+        
+                // Optional: Sign them out immediately
+                google.accounts.id.disableAutoSelect();
+                return; // Block further processing
+              }
+
+          // If authorized, proceed as normal
+            sessionStorage.setItem('google_token', response.credential);
             window.location.href = "summary.html";
-        }
+
+            } catch (error) {
+              console.error("Login error:", error);
+              document.getElementById('status').textContent = "Error during login. Try again.";
+            }
+          }
 
         function initGoogleAuth() {
             if (typeof google === 'undefined') {
