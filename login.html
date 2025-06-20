@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-signin-client_id" content="753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com">
+    <title>Login - Meeting App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #status {
+            margin-top: 20px;
+            color: #d93025;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Meeting App Login</h1>
+        <!-- Google Sign-In Button -->
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        <div id="status"></div>
+    </div>
 
+    <!-- Load Google Platform Library -->
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    
+    <script>
+        // Handle successful sign-in
+        function onSignIn(googleUser) {
+            document.getElementById('status').textContent = "Signing in...";
+            
+            // Get the ID token (for backend verification)
+            const id_token = googleUser.getAuthResponse().id_token;
+            
+            // Store token temporarily (alternative: send to backend)
+            sessionStorage.setItem('google_token', id_token);
+            
+            // Redirect to summary page after 1 second
+            setTimeout(() => {
+                window.location.href = "summary.html";
+            }, 1000);
+        }
+
+        // Auto-sign-in check (optional)
+        function checkAuth() {
+            gapi.auth2.init({
+                client_id: '753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com'
+            }).then(() => {
+                if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                    window.location.href = "summary.html";
+                }
+            });
+        }
+        
+        // Initialize auth check when library loads
+        window.onload = checkAuth;
+    </script>
+</body>
+</html>
