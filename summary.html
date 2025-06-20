@@ -161,6 +161,13 @@
   </style>
 </head>
 <body>
+  <!-- Add Sign-Out Button at the top -->
+  <div style="text-align: right; margin-bottom: 20px;">
+    <a href="#" onclick="signOut();" style="color: #d32f2f; text-decoration: none;">
+      Sign Out (Logged in as: <span id="userEmail"></span>)
+    </a>
+  </div>
+  
   <h1>Meeting Records</h1>
   
   <!-- Filter Controls -->
@@ -197,12 +204,39 @@
   </div>
   
   <div id="message"></div>
-
+  
+  <!-- Load Google Platform Library -->
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  
   <script>
+       // ===== NEW AUTH CODE =====
+    // Check authentication on load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Display user email if logged in
+      const auth2 = gapi.auth2.getAuthInstance();
+      if (auth2.isSignedIn.get()) {
+        const profile = auth2.currentUser.get().getBasicProfile();
+        document.getElementById('userEmail').textContent = profile.getEmail();
+      } else {
+        // Redirect to login if not authenticated
+        window.location.href = "login.html";
+      }
+      
+      // Load meetings automatically if authenticated
+      loadMeetings();
+    });
+
+    // Sign out function
+    function signOut() {
+      gapi.auth2.getAuthInstance().signOut().then(function() {
+        window.location.href = "login.html";
+      });
+    }
+    
     async function loadMeetings() {
-      const districtFilter = document.getElementById('filterDistrict').value;
-      const messageEl = document.getElementById('message');
-      const tbody = document.querySelector('#meetingsTable tbody');
+      const auth2 = gapi.auth2.getAuthInstance();
+      const user = auth2.currentUser.get();
+      const idToken = user.getAuthResponse().id_token;
       
       // Show loading state
       tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading meetings...</td></tr>';
@@ -213,11 +247,12 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + idToken  // Send token to backend
           },
           body: JSON.stringify({
             function: 'listMeetings',
             payload: {
-              district: districtFilter
+              document.getElementById('filterDistrict').value
             }
           })
         });
@@ -236,6 +271,10 @@
         messageEl.style.display = 'block';
         
       } catch (error) {
+        // Handle unauthorized errors
+        if (error.message.includes('401')) {
+          window.location.href = "login.html";
+        }
         messageEl.className = 'error';
         messageEl.textContent = `Error: ${error.message}`;
         messageEl.style.display = 'block';
