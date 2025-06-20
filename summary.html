@@ -234,25 +234,27 @@ document.head.appendChild(script);
     
     // Check authentication on load
     document.addEventListener('DOMContentLoaded', function() {
-      // Display user email if logged in
-      const auth2 = gapi.auth2.getAuthInstance();
-      if (auth2.isSignedIn.get()) {
-        const profile = auth2.currentUser.get().getBasicProfile();
-        document.getElementById('userEmail').textContent = profile.getEmail();
-      } else {
-        // Redirect to login if not authenticated
-        window.location.href = "login.html";
-      }
-      
-      // Load meetings automatically if authenticated
-      loadMeetings();
+      const token = sessionStorage.getItem('google_token');
+        if (!token) {
+            // Redirect to login if no token
+            window.location.href = "login.html";
+            return;
+        }
+        
+        // You can decode the token to get user info if needed
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            document.getElementById('userEmail').textContent = payload.email;
+        } catch (e) {
+            console.error('Error parsing token:', e);
+        }
     });
 
     // Sign out function
     function signOut() {
-      gapi.auth2.getAuthInstance().signOut().then(function() {
+        sessionStorage.removeItem('google_token');
         window.location.href = "login.html";
-      });
+      };
     }
     
     async function loadMeetings() {
