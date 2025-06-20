@@ -209,7 +209,29 @@
   <script src="https://apis.google.com/js/platform.js" async defer></script>
   
   <script>
-       // ===== NEW AUTH CODE =====
+    // Initialize Google Auth
+  function initAuth() {
+    google.accounts.id.initialize({
+    client_id: '753922297166-ra7031ivrmld6jn0ntte7b9vig2o115o.apps.googleusercontent.com',
+    callback: (response) => {
+      sessionStorage.setItem('google_token', response.credential);
+      loadMeetings();
+    }
+  });
+
+    // Check existing session
+    if (!sessionStorage.getItem('google_token')) {
+      google.accounts.id.prompt();
+    }
+}
+
+// Load Google library dynamically
+const script = document.createElement('script');
+script.src = 'https://accounts.google.com/gsi/client';
+script.onload = initAuth;
+document.head.appendChild(script);
+
+    
     // Check authentication on load
     document.addEventListener('DOMContentLoaded', function() {
       // Display user email if logged in
